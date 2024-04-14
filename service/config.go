@@ -20,6 +20,9 @@ var corpsecret = os.Getenv("WEWORK_CROP_SECRET")
 // openai key
 var openAiKey = os.Getenv("OPENAI_KEY")
 
+// openai base url
+var openAiBaseUrl = os.Getenv("OPENAI_BASE_URL")
+
 // 企业微信的重试缓存，如果服务器延迟低，可以去掉该变量以及 isRetry 逻辑
 var retryCache = cache.New(60*time.Minute, 10*time.Minute)
 
