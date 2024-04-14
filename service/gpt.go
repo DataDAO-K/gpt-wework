@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
@@ -49,7 +48,7 @@ func AskOnConversation(question, conversationId string, size int) (string, error
 	}
 	messages = messages[len(messages)-pivot:]
 	conversationCache.Set(key, messages, 12*time.Hour)
-	chat := NewGPT(GetConfig().OpenaiAPIKey, GetConfig().OpenaiBaseURL, conversationId)
+	chat := NewGPT(openAiKey, conversationId)
 	defer chat.Close()
 	answer, err := chat.Chat(messages)
 	if err != nil {
@@ -80,13 +79,13 @@ func (c *ChatGPT) Chat(messages []gogpt.ChatCompletionMessage) (answer string, e
 	return answer, err
 }
 
-func NewGPT(ApiKey, BaseURL, UserId string) *ChatGPT {
+func NewGPT(ApiKey, UserId string) *ChatGPT {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
     	config := gogpt.DefaultConfig(ApiKey)
 	if baseURL != "" {
-        	config.BaseURL = BaseURL
+        	config.BaseURL = openAiBaseUrl
     	}
     	client := gogpt.NewClientWithConfig(config)
 	return &ChatGPT{
