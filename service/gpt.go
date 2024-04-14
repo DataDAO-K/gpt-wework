@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
-	gogpt "github.com/sashabaranov/go-gpt3"
+	gogpt "github.com/sashabaranov/go-openai"
 )
 
 // 企业微信 token 缓存，请求频次过高可能有一些额外的问题
-var conversationCache = cache.New(5*time.Minute, 5*time.Minute)
+var conversationCache = cache.New(5*time.Minute, 10*time.Minute)
 
 type ChatGPT struct {
 	client *gogpt.Client
@@ -48,7 +49,7 @@ func AskOnConversation(question, conversationId string, size int) (string, error
 	}
 	messages = messages[len(messages)-pivot:]
 	conversationCache.Set(key, messages, 12*time.Hour)
-	chat := NewGPT(openAiKey, conversationId)
+	chat := NewGPT(GetConfig().OpenaiAPIKey, GetConfig().OpenaiBaseURL, conversationId)
 	defer chat.Close()
 	answer, err := chat.Chat(messages)
 	if err != nil {
@@ -79,12 +80,15 @@ func (c *ChatGPT) Chat(messages []gogpt.ChatCompletionMessage) (answer string, e
 	return answer, err
 }
 
-func NewGPT(ApiKey, UserId string) *ChatGPT {
+func NewGPT(ApiKey, BaseURL, UserId string) *ChatGPT {
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-ctx.Done()
-		cancel()
-	}()
+	defer cancel()
+
+    	config := gogpt.DefaultConfig(ApiKey)
+	if baseURL != "" {
+        	config.BaseURL = BaseURL
+    	}
+    	client := gogpt.NewClientWithConfig(config)
 	return &ChatGPT{
 		client: gogpt.NewClient(ApiKey),
 		ctx:    ctx,
