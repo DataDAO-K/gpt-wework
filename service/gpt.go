@@ -12,7 +12,7 @@ import (
 )
 
 // 企业微信 token 缓存，请求频次过高可能有一些额外的问题
-var conversationCache = cache.New(5*time.Minute, 10*time.Minute)
+var conversationCache = cache.New(5*time.Minute, 5*time.Minute)
 
 type ChatGPT struct {
 	client *gogpt.Client
